@@ -1,0 +1,836 @@
+¡El código que tienes es una base excelente! Ya tiene un diseño muy bonito ("estilo cuaderno"), un sistema de progreso y una estructura muy clara.
+
+Para hacerlo aún más atractivo, interactivo y útil (especialmente pensado para mantener el interés y que no sea aburrido), le he añadido las siguientes **mejoras**:
+
+1. **Modo Oscuro (Dark Mode):** A la mayoría de las personas que aprenden a programar les encanta el modo oscuro. Añadí un botón en la parte superior para cambiar entre el tema claro (cuaderno) y el tema oscuro (editor de código).
+2. **Efecto de Confeti (Gamificación):** Ahora, cuando respondes correctamente a un ejercicio o terminas el curso, estalla confeti en la pantalla. Esto genera una sensación de recompensa inmediata.
+3. **Botón de "Copiar Código":** Añadí un pequeño botón en cada bloque de código de ejemplo para que el usuario pueda copiar el código con un clic y pegarlo directamente en Replit o Visual Studio Code para probarlo.
+4. **Animaciones mejoradas:** Suavice algunas transiciones para que se sienta como una aplicación moderna.
+
+Aquí tienes el código completo mejorado. Solo tienes que copiarlo y guardarlo en tu archivo `.html`:
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Interactivo — Cuaderno de código</title>
+<!-- Librería para el efecto de confeti -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<style>
+  :root{
+    /* Tema Claro (Por defecto) */
+    --paper: #FBF7EC;
+    --paper-line: #E7DFC8;
+    --ink: #2B2A4A;
+    --ink-soft: #5B5876;
+    --violet: #6C5CE7;
+    --violet-dark: #4E3FC4;
+    --coral: #FF6B81;
+    --mint: #00C9A7;
+    --amber: #FFB020;
+    --sky: #3DA5D9;
+    --lilac: #B983FF;
+    --leaf: #2FBF71;
+    --code-bg: #211C36;
+    --code-text: #EDEBFA;
+    --bg-page: #ffffff;
+    --bg-opt-hover: #F6F4FF;
+  }
+
+  /* Tema Oscuro */
+  body.dark-theme {
+    --paper: #1a1a24;
+    --paper-line: #2d2d3d;
+    --ink: #e0e0e8;
+    --ink-soft: #a0a0b0;
+    --bg-page: #252533;
+    --bg-opt-hover: #36364a;
+    --code-bg: #11111a;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--paper-line) 1px, transparent 1px) 0 0/100% 32px,
+      var(--paper);
+    color:var(--ink);
+    font-family:"Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    min-height:100vh;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  button{font-family:inherit;cursor:pointer;}
+  button:focus-visible, .tab:focus-visible, .opt:focus-visible{
+    outline:3px solid var(--violet-dark);
+    outline-offset:2px;
+  }
+
+  /* ---------- layout shell ---------- */
+  #app{
+    display:flex;
+    min-height:100vh;
+  }
+
+  /* spiral binder */
+  .binder{
+    width:34px;
+    flex:0 0 34px;
+    background:repeating-linear-gradient(180deg, var(--paper-line) 0 2px, transparent 2px 30px);
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-top:24px;
+    gap:22px;
+  }
+  .binder .hole{
+    width:14px;height:14px;border-radius:50%;
+    background:var(--paper);
+    box-shadow: inset 0 2px 3px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.2);
+    border:2px solid var(--ink-soft);
+  }
+
+  .sidebar{
+    width:240px;
+    flex:0 0 240px;
+    padding:22px 10px 22px 4px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .brand{
+    font-size:13px;
+    color:var(--ink-soft);
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    margin:0 8px 6px;
+    font-weight:700;
+  }
+
+  .tab{
+    border:none;
+    text-align:left;
+    background:var(--bg-page);
+    border:2px solid var(--ink);
+    border-right:none;
+    border-radius:10px 0 0 10px;
+    padding:10px 12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:14.5px;
+    font-weight:600;
+    color:var(--ink);
+    position:relative;
+    box-shadow:2px 2px 0 rgba(0,0,0,0.12);
+    transition:transform .2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s;
+  }
+  .tab:hover{ transform:translateX(-4px); }
+  .tab .emoji{font-size:17px;}
+  .tab .check{
+    margin-left:auto;
+    font-size:13px;
+    color:var(--mint);
+    font-weight:900;
+  }
+  .tab.active{
+    background:var(--tabcolor, var(--violet));
+    color:#fff;
+    transform:translateX(-6px);
+    box-shadow:4px 4px 0 rgba(0,0,0,0.15);
+  }
+  .tab.active .check{ color:#fff; }
+
+  .reset-link{
+    margin:14px 8px 0;
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    font-size:12px;
+    text-decoration:underline;
+    padding:0;
+    align-self:flex-start;
+  }
+
+  /* ---------- main page ---------- */
+  main{
+    flex:1;
+    padding:26px 34px 60px;
+    min-width:0;
+  }
+
+  header.top{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-bottom:22px;
+  }
+  
+  .header-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap;}
+  
+  header.top h1{
+    font-family:"Trebuchet MS", "Segoe UI Rounded", sans-serif;
+    font-size:26px;
+    margin:0;
+    color:var(--violet);
+  }
+  
+  .theme-toggle {
+    background: var(--bg-page);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--ink);
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.15);
+    transition: all 0.2s;
+  }
+  .theme-toggle:hover { transform: translateY(-2px); }
+
+  .points-pill{
+    background:var(--amber);
+    color:#3a2600;
+    font-weight:800;
+    font-size:14px;
+    padding:6px 14px;
+    border-radius:999px;
+    border:2px solid var(--ink);
+    box-shadow:2px 2px 0 rgba(0,0,0,0.15);
+  }
+  
+  .progress-wrap{ width: 100%; margin-top: 10px; }
+  .progress-label{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:4px;
+    font-weight:600;
+  }
+  .progress-track{
+    height:14px;
+    background:var(--bg-page);
+    border:2px solid var(--ink);
+    border-radius:999px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg, var(--mint), var(--sky));
+    transition:width .5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .banner-done{
+    background:var(--mint);
+    color:#04352b;
+    border:2px solid var(--ink);
+    border-radius:12px;
+    padding:12px 16px;
+    font-weight:700;
+    margin-bottom:20px;
+    box-shadow:3px 3px 0 rgba(0,0,0,0.15);
+    animation: slideDown 0.5s ease-out;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .page{
+    background:var(--bg-page);
+    border:2px solid var(--ink);
+    border-radius:14px;
+    padding:26px 28px;
+    box-shadow:5px 5px 0 rgba(0,0,0,0.12);
+    max-width:760px;
+    transition: background 0.3s;
+    animation: fadeIn 0.4s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .module-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:var(--tabcolor, var(--violet));
+    color:#fff;
+    font-weight:800;
+    font-size:13px;
+    padding:5px 12px;
+    border-radius:999px;
+    margin-bottom:12px;
+  }
+
+  .page h2{
+    font-family:"Trebuchet MS", "Segoe UI Rounded", sans-serif;
+    font-size:24px;
+    margin:0 0 12px;
+    color:var(--ink);
+  }
+  .page p{
+    line-height:1.6;
+    color:var(--ink-soft);
+    font-size:15px;
+    margin:0 0 16px;
+  }
+  .page code{
+    background:var(--paper-line);
+    color:var(--violet);
+    padding:2px 6px;
+    border-radius:5px;
+    font-family:Consolas, Monaco, "Courier New", monospace;
+    font-size:13.5px;
+    font-weight: bold;
+  }
+
+  .code-container {
+    position: relative;
+    margin: 0 0 20px;
+  }
+
+  .copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  
+  .copy-btn:hover {
+    background: rgba(255,255,255,0.25);
+    transform: scale(1.05);
+  }
+
+  .code-block{
+    background:var(--code-bg);
+    color:var(--code-text);
+    font-family:Consolas, Monaco, "Courier New", monospace;
+    font-size:15px;
+    line-height:1.65;
+    padding:16px 18px;
+    border-radius:10px;
+    white-space:pre;
+    overflow-x:auto;
+    border:2px solid var(--ink);
+    margin: 0;
+  }
+  
+  .tok-comment{color:#8B87B0; font-style:italic;}
+  .tok-string{color:#FFCE7A;}
+  .tok-keyword{color:#FF87A2; font-weight:700;}
+  .tok-builtin{color:#67E8C6; font-weight:700;}
+  .tok-number{color:#8FD3FF;}
+
+  .exercise{
+    border-top:2px dashed var(--paper-line);
+    padding-top:20px;
+    margin-top: 10px;
+  }
+  .exercise h3{
+    font-size:16px;
+    margin:0 0 14px;
+    color:var(--ink);
+  }
+  .opts{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .opt{
+    text-align:left;
+    background:var(--bg-page);
+    border:2px solid var(--ink);
+    border-radius:9px;
+    padding:12px 16px;
+    font-size:15px;
+    color:var(--ink);
+    transition:transform .15s cubic-bezier(0.175, 0.885, 0.32, 1.275), background .15s ease, border-color .15s;
+  }
+  .opt:hover:not(:disabled){ transform:translateX(4px); background:var(--bg-opt-hover); }
+  .opt.correct{ background:var(--mint); color:#04352b; border-color:#04352b; font-weight: bold;}
+  .opt.wrong{ background:var(--coral); color:#3a0410; border-color:#3a0410; opacity: 0.7;}
+  .opt:disabled{ cursor:default; }
+
+  .row-actions{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .hint-btn{
+    background:none;
+    border:none;
+    color:var(--violet);
+    font-weight:700;
+    font-size:14px;
+    text-decoration:underline;
+    padding:4px 0;
+  }
+  .hint-box{
+    background: rgba(255, 176, 32, 0.15);
+    border:1.5px dashed var(--amber);
+    color: var(--ink);
+    font-size:14px;
+    padding:10px 14px;
+    border-radius:8px;
+    margin-top:12px;
+    max-width:520px;
+    animation: fadeIn 0.3s;
+  }
+  
+  .feedback{
+    margin-top:14px;
+    padding:12px 16px;
+    border-radius:9px;
+    font-size:14.5px;
+    font-weight:600;
+    max-width:560px;
+    animation: slideDown 0.3s;
+  }
+  .feedback.good{ background:#E2FBF3; color:#046a4f; border:2px solid var(--mint); }
+  .feedback.bad{ background:#FFEAEE; color:#8c1531; border:2px solid var(--coral); }
+  .feedback p{ margin:6px 0 0; font-weight:500; color:inherit; }
+
+  .next-btn{
+    background:var(--violet);
+    color:#fff;
+    border:2px solid var(--ink);
+    border-radius:9px;
+    padding:12px 24px;
+    font-weight:800;
+    font-size:15px;
+    box-shadow:3px 3px 0 rgba(0,0,0,0.2);
+    margin-top:20px;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .next-btn:hover{ background:var(--violet-dark); transform: translateY(-2px); }
+
+  .finale{
+    text-align:center;
+    padding:40px 10px;
+    animation: fadeIn 0.8s;
+  }
+  .finale .trophy{ font-size:64px; margin-bottom:10px; }
+  .finale h2{ font-size:26px; margin:0 0 12px;}
+  .finale p{ max-width:480px; margin:0 auto 10px; line-height: 1.6;}
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 760px){
+    #app{ flex-direction:column; }
+    .binder{ display:none; }
+    .sidebar{
+      width:100%; flex:none;
+      flex-direction:row;
+      overflow-x:auto;
+      padding:14px 12px 14px;
+      gap:10px;
+      border-bottom: 2px solid var(--ink);
+    }
+    .brand{ display:none; }
+    .tab{
+      border-radius:10px;
+      border-right:2px solid var(--ink);
+      flex:0 0 auto;
+      white-space:nowrap;
+    }
+    .reset-link{ display:none; }
+    main{ padding:20px 16px 40px; }
+    .page{ padding:22px 20px; }
+    header.top h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+(function(){
+
+  var TAB_COLORS = ["#6C5CE7","#FF6B81","#00C9A7","#FFB020","#3DA5D9","#B983FF","#2FBF71","#FF6B81"];
+
+  var MODULES = [
+    {
+      id:"intro", emoji:"🐍", title:"¡Bienvenida a Python!",
+      explain:"Python es uno de los lenguajes de programación más usados del mundo. Su gran ventaja es que se lee casi como inglés normal, así que es ideal para empezar. Cada lección de este cuaderno es cortita — avanza a tu ritmo, sin prisa.",
+      example: 'print("¡Hola, Skarlet!")',
+      exercise:{
+        question:'¿Qué crees que hace la línea print("¡Hola, Skarlet!")?',
+        options:["Muestra el mensaje en pantalla","Guarda el mensaje en un archivo","Borra la pantalla","Le pregunta el nombre al usuario"],
+        correct:0,
+        hint:"Piensa en la palabra 'imprimir' — eso es print en inglés.",
+        explainGood:"print() es la función más usada en Python: muestra en pantalla lo que le pongas dentro de los paréntesis."
+      }
+    },
+    {
+      id:"variables", emoji:"📦", title:"Variables: cajitas con datos",
+      explain:"Una variable es como una cajita con etiqueta donde guardas un dato para usarlo después. En Python no hace falta decir de qué tipo es: solo escribes el nombre, un signo = y el valor.",
+      example:'jugador = "Nova"\nnivel = 7\npuntos = 250.5\nprint(jugador, nivel, puntos)',
+      exercise:{
+        question:"¿Cuál de estas líneas crea correctamente una variable llamada vidas con el valor 3?",
+        options:["vidas = 3","3 = vidas","vidas == 3","var vidas = 3"],
+        correct:0,
+        hint:"El nombre de la variable siempre va primero, y se usa un solo signo =.",
+        explainGood:"El signo = asigna un valor: nombre_variable = valor. 'vidas == 3' compara en lugar de asignar, y Python no usa la palabra var."
+      }
+    },
+    {
+      id:"tipos", emoji:"🔤", title:"Tipos de datos",
+      explain:"Los datos en Python tienen distintos tipos: int (números enteros), float (números con decimales), str (texto, entre comillas) y bool (verdadero o falso).",
+      example:'entero = 10        # int\ndecimal = 3.14     # float\ntexto = "Python"    # str\nes_facil = True     # bool',
+      exercise:{
+        question:"¿Qué tipo de dato es True?",
+        options:["bool","str","int","float"],
+        correct:0,
+        hint:"Solo puede valer verdadero o falso.",
+        explainGood:"bool (booleano) solo tiene dos valores posibles: True o False. Se usan muchísimo para tomar decisiones."
+      }
+    },
+    {
+      id:"condicionales", emoji:"🔀", title:"Condicionales: if / elif",
+      explain:"Con if, elif y else tu programa toma decisiones según una condición. Si la condición es verdadera se ejecuta ese bloque; si no, Python revisa la siguiente.",
+      example:'puntos = 85\n\nif puntos >= 90:\n    print("¡Nivel S!")\nelif puntos >= 70:\n    print("¡Nivel A!")\nelse:\n    print("Sigue practicando")',
+      exercise:{
+        question:"¿Qué imprime este código?",
+        options:["¡Nivel S!","¡Nivel A!","Sigue practicando","No imprime nada"],
+        correct:1,
+        hint:"85 no es mayor o igual a 90... pero sí a 70.",
+        explainGood:"Python revisa las condiciones en orden. Como 85 no cumple >= 90 pero sí >= 70, se ejecuta el bloque elif."
+      }
+    },
+    {
+      id:"bucles", emoji:"🔁", title:"Bucles: repite código",
+      explain:"Un bucle repite código varias veces sin que tengas que copiarlo y pegarlo. for i in range(n) repite el bloque n veces, contando desde 0.",
+      example:'for i in range(3):\n    print("Ronda", i)',
+      exercise:{
+        question:"¿Cuántas veces se imprime la palabra 'Ronda'?",
+        options:["2","3","4","Infinitas"],
+        correct:1,
+        hint:"range(3) genera los números 0, 1 y 2.",
+        explainGood:"range(3) produce tres valores (0, 1, 2), así que el bloque del for se repite exactamente 3 veces."
+      }
+    },
+    {
+      id:"listas", emoji:"📋", title:"Listas: guarda varias cosas",
+      explain:"Una lista guarda varios datos juntos, en orden, dentro de corchetes []. Cada elemento tiene una posición (índice) que empieza en 0.",
+      example:'inventario = ["espada", "escudo", "poción"]\ninventario.append("mapa")\nprint(inventario[0])\nprint(len(inventario))',
+      exercise:{
+        question:"¿Qué imprime print(inventario[0])?",
+        options:["espada","escudo","poción","mapa"],
+        correct:0,
+        hint:"El primer elemento de una lista tiene índice 0.",
+        explainGood:"Las listas en Python empiezan a contar desde el índice 0, así que inventario[0] es 'espada'."
+      }
+    },
+    {
+      id:"funciones", emoji:"🛠️", title:"Funciones",
+      explain:"Una función es un bloque de código reutilizable que puedes ejecutar cuantas veces quieras. Se define con def, recibe datos y devuelve un resultado con return.",
+      example:'def saludar(nombre):\n    return "¡Hola, " + nombre + "!"\n\nmensaje = saludar("Skarlet")\nprint(mensaje)',
+      exercise:{
+        question:"¿Qué palabra clave se usa para crear una función en Python?",
+        options:["def","function","func","create"],
+        correct:0,
+        hint:"Viene de la palabra 'define'.",
+        explainGood:"def es la palabra clave que usa Python para declarar una nueva función."
+      }
+    },
+    {
+      id:"reto", emoji:"🏆", title:"Reto final",
+      explain:"Este reto combina variables, un bucle y un condicional. Léelo con calma, línea por línea, antes de responder.",
+      example:'puntos_totales = 0\n\nfor ronda in range(3):\n    puntos_totales = puntos_totales + 10\n    if puntos_totales >= 30:\n        print("¡Subiste de nivel!")\n\nprint("Puntos finales:", puntos_totales)',
+      exercise:{
+        question:"¿Qué imprime la última línea del programa?",
+        options:["Puntos finales: 20","Puntos finales: 30","Puntos finales: 0","Hay un error"],
+        correct:1,
+        hint:"El bucle se repite 3 veces y cada vez suma 10 a puntos_totales.",
+        explainGood:"El for se repite 3 veces (ronda 0, 1, 2), sumando 10 en cada una: 10, 20, y finalmente 30."
+      }
+    }
+  ];
+
+  var GOOD_MSG = ["¡Exacto! 🎉","¡Perfecto! 🐍","¡Así se hace! ✨","¡Lo lograste! 🚀","¡Correcto, vas genial! 🌟"];
+  var BAD_MSG = ["Casi... intenta de nuevo 💡","No es esa, ¡pero vas bien! 🔄","Ups, revisa el ejemplo de arriba 👆","Casi la agarras, prueba otra vez 🧭"];
+
+  var state = {
+    current: 0,
+    points: 0,
+    completed: {},   
+    hintOpen: {},    
+    answered: {},
+    isDark: false     
+  };
+
+  function escapeHtml(s){
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function highlightPython(code){
+    var escaped = escapeHtml(code);
+    var pattern = /(#.*$)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\b(def|if|elif|else|for|while|in|return|True|False|None|and|or|not|import|class|break|continue|pass)\b|\b(print|range|len|append|input|str|int|float|type)\b|\b(\d+\.?\d*)\b/gm;
+    return escaped.replace(pattern, function(match, comment, string, keyword, builtin, number){
+      if(comment) return '<span class="tok-comment">'+comment+'</span>';
+      if(string) return '<span class="tok-string">'+string+'</span>';
+      if(keyword) return '<span class="tok-keyword">'+keyword+'</span>';
+      if(builtin) return '<span class="tok-builtin">'+builtin+'</span>';
+      if(number) return '<span class="tok-number">'+number+'</span>';
+      return match;
+    });
+  }
+
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  
+  function triggerConfetti() {
+    if(typeof confetti === "function") {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#6C5CE7', '#FF6B81', '#00C9A7', '#FFB020']
+      });
+    }
+  }
+
+  window.copyCode = function(text, btn) {
+    navigator.clipboard.writeText(text).then(function() {
+      var oldText = btn.innerText;
+      btn.innerText = "¡Copiado!";
+      btn.style.background = "#00C9A7";
+      setTimeout(function() {
+        btn.innerText = oldText;
+        btn.style.background = "";
+      }, 2000);
+    });
+  }
+
+  window.toggleTheme = function() {
+    state.isDark = !state.isDark;
+    if(state.isDark) {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
+    render();
+  }
+
+  function selectModule(idx){
+    state.current = idx;
+    render();
+  }
+
+  function toggleHint(id){
+    state.hintOpen[id] = !state.hintOpen[id];
+    render();
+  }
+
+  function answer(mod, idx){
+    var already = state.answered[mod.id];
+    if(already && already.correct) return; 
+    var isCorrect = idx === mod.exercise.correct;
+    state.answered[mod.id] = {picked: idx, correct: isCorrect};
+    
+    if(isCorrect && !state.completed[mod.id]){
+      state.completed[mod.id] = true;
+      state.points += 10;
+      triggerConfetti();
+      
+      if(completedCount() === MODULES.length) {
+         setTimeout(triggerConfetti, 1000);
+         setTimeout(triggerConfetti, 2000);
+      }
+    }
+    render();
+  }
+
+  function goNext(){
+    if(state.current < MODULES.length - 1){
+      state.current += 1;
+      window.scrollTo(0, 0);
+      render();
+    }
+  }
+
+  function completedCount(){
+    var n = 0;
+    for(var i=0;i<MODULES.length;i++){ if(state.completed[MODULES[i].id]) n++; }
+    return n;
+  }
+
+  function el(tag, attrs, html){
+    var e = document.createElement(tag);
+    if(attrs){
+      for(var k in attrs){
+        if(k === "class") e.className = attrs[k];
+        else if(k === "onclick") e.addEventListener("click", attrs[k]);
+        else e.setAttribute(k, attrs[k]);
+      }
+    }
+    if(html !== undefined) e.innerHTML = html;
+    return e;
+  }
+
+  function render(){
+    var app = document.getElementById("app");
+    app.innerHTML = "";
+
+    // Binder (decorativo)
+    var binder = el("div", {class:"binder"});
+    for(var b=0;b<15;b++){ binder.appendChild(el("div",{class:"hole"})); }
+    app.appendChild(binder);
+
+    // Sidebar
+    var sidebar = el("div", {class:"sidebar"});
+    sidebar.appendChild(el("div", {class:"brand"}, "Cuaderno Python"));
+    MODULES.forEach(function(mod, idx){
+      var isActive = idx === state.current;
+      var tab = el("button", {
+        class: "tab" + (isActive ? " active" : ""),
+        "aria-label": mod.title,
+        onclick: function(i){ return function(){ selectModule(i); }; }(idx)
+      });
+      tab.style.setProperty("--tabcolor", TAB_COLORS[idx % TAB_COLORS.length]);
+      tab.appendChild(el("span",{class:"emoji"}, mod.emoji));
+      tab.appendChild(el("span",{}, mod.title));
+      if(state.completed[mod.id]){
+        tab.appendChild(el("span",{class:"check"}, "✓"));
+      }
+      sidebar.appendChild(tab);
+    });
+    
+    sidebar.appendChild(el("button", {class:"reset-link", onclick: function(){
+      if(confirm("¿Reiniciar todo tu progreso?")) {
+        state.points = 0; state.completed = {}; state.answered = {}; state.current = 0; render();
+      }
+    }}, "Reiniciar progreso"));
+    
+    app.appendChild(sidebar);
+
+    // Main
+    var main = el("main", {});
+    var header = el("header", {class:"top"});
+    
+    var headerLeft = el("div", {class: "header-left"});
+    headerLeft.appendChild(el("h1",{}, "¡Hola, Skarlet! 👋"));
+    headerLeft.appendChild(el("div",{class:"points-pill"}, "⭐ " + state.points + " pts"));
+    header.appendChild(headerLeft);
+    
+    var themeBtn = el("button", {class: "theme-toggle", onclick: window.toggleTheme}, state.isDark ? "☀️ Modo Claro" : "🌙 Modo Oscuro");
+    header.appendChild(themeBtn);
+
+    var progWrap = el("div",{class:"progress-wrap"});
+    var pct = Math.round((completedCount()/MODULES.length)*100);
+    progWrap.appendChild(el("div",{class:"progress-label"}, "Progreso: " + completedCount() + " / " + MODULES.length + " lecciones"));
+    var track = el("div",{class:"progress-track"});
+    track.appendChild(el("div",{class:"progress-fill", style:"width:"+pct+"%"}));
+    progWrap.appendChild(track);
+    header.appendChild(progWrap);
+    
+    main.appendChild(header);
+
+    if(completedCount() === MODULES.length){
+      main.appendChild(el("div",{class:"banner-done"}, "🏆 ¡Completaste todo el cuaderno! Puedes seguir repasando cuando quieras."));
+    }
+
+    var mod = MODULES[state.current];
+    var page = el("div",{class:"page"});
+    page.style.setProperty("--tabcolor", TAB_COLORS[state.current % TAB_COLORS.length]);
+
+    page.appendChild(el("span",{class:"module-eyebrow"}, mod.emoji + " Lección " + (state.current+1) + " de " + MODULES.length));
+    page.appendChild(el("h2",{}, mod.title));
+    page.appendChild(el("p",{}, mod.explain));
+    
+    // Contenedor del código con botón de copiar
+    var codeContainer = el("div", {class: "code-container"});
+    codeContainer.appendChild(el("button", {
+      class: "copy-btn", 
+      onclick: function(e){ window.copyCode(mod.example, e.target); }
+    }, "Copiar"));
+    codeContainer.appendChild(el("pre",{class:"code-block"}, highlightPython(mod.example)));
+    page.appendChild(codeContainer);
+
+    var exWrap = el("div",{class:"exercise"});
+    exWrap.appendChild(el("h3",{}, "✏️ Practica: " + mod.exercise.question));
+
+    var optsWrap = el("div",{class:"opts"});
+    var answered = state.answered[mod.id];
+    mod.exercise.options.forEach(function(optText, oIdx){
+      var cls = "opt";
+      var disabled = false;
+      if(answered){
+        if(oIdx === mod.exercise.correct) cls += " correct";
+        else if(oIdx === answered.picked && !answered.correct) cls += " wrong";
+        if(answered.correct) disabled = true;
+      }
+      var btn = el("button", {
+        class: cls,
+        onclick: function(i){ return function(){ answer(mod, i); }; }(oIdx)
+      }, escapeHtml(optText));
+      if(disabled) btn.disabled = true;
+      optsWrap.appendChild(btn);
+    });
+    exWrap.appendChild(optsWrap);
+
+    var rowActions = el("div",{class:"row-actions"});
+    rowActions.appendChild(el("button",{class:"hint-btn", onclick:function(){ toggleHint(mod.id); }},
+      state.hintOpen[mod.id] ? "Ocultar pista" : "💡 Ver pista"));
+    exWrap.appendChild(rowActions);
+
+    if(state.hintOpen[mod.id]){
+      exWrap.appendChild(el("div",{class:"hint-box"}, mod.exercise.hint));
+    }
+
+    if(answered){
+      var fb = el("div",{class:"feedback " + (answered.correct ? "good" : "bad")});
+      fb.appendChild(el("div",{}, answered.correct ? pick(GOOD_MSG) : pick(BAD_MSG)));
+      if(answered.correct){
+        fb.appendChild(el("p",{}, mod.exercise.explainGood));
+      }
+      exWrap.appendChild(fb);
+    }
+
+    page.appendChild(exWrap);
+
+    if(answered && answered.correct && state.current < MODULES.length - 1){
+      page.appendChild(el("button",{class:"next-btn", onclick: goNext}, "Siguiente lección →"));
+    } else if(answered && answered.correct && state.current === MODULES.length - 1){
+      var finale = el("div",{class:"finale"});
+      finale.appendChild(el("div",{class:"trophy"}, "🐍🏆"));
+      finale.appendChild(el("h2",{}, "¡Terminaste el curso, Skarlet!"));
+      finale.appendChild(el("p",{}, "Ya conoces las bases reales de Python. El siguiente paso es escribir código de verdad: prueba creando un archivo en Replit o en tu propio Visual Studio Code."));
+      page.appendChild(finale);
+    }
+
+    main.appendChild(page);
+    app.appendChild(main);
+  }
+
+  // Inicializar estado de tema oscuro si el sistema lo prefiere
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    state.isDark = true;
+    document.body.classList.add('dark-theme');
+  }
+
+  render();
+})();
+</script>
+
+</body>
+</html>
+
+```

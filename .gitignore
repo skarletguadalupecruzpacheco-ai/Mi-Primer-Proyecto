@@ -1,0 +1,45 @@
+# .gitignore
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+*.log
+
+# Editores de código
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+*~
+
+# Node (si decides usar npm en el futuro)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Python (si ejecutas código Python)
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Archivos temporales
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Sistemas de compilación
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# IDEs específicos
+.DS_Store
+.AppleDouble
+.LSOverride
